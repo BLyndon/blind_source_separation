@@ -1,6 +1,5 @@
 import numpy as np
 from numpy.linalg import *
-from itertools import permutations
 
 def TDOA_estimator(Wf, J=0):
     def single_f_est(wf,J=J): 
@@ -18,24 +17,30 @@ def TDOA_estimator(Wf, J=0):
         estimator = np.delete(estimator,J,0)
 
         return estimator
-    rf_est = list(map(single_f_est, Wf))
-    return np.squeeze(np.asarray(rf_est))
+    return np.squeeze(np.asarray(list(map(single_f_est, Wf))))
 
-def init_centers(r):
-    N, K = r.shape
-    scale = abs(r).mean()
-    c = scale*np.random.randn(K,1)
-    return np.repeat(c,N, axis=1).T
+from itertools import permutations
 
 def find_permutations(r,c):
     def find_single_f_perm(r,c):
         def sum_sq(v,c,perm):
             sum=0
             for k in range(c.shape[0]):
-                sum += np.linalg.norm(v[perm[k]]-c[k])**2
+                sum += norm(v[perm[k]]-c[k])**2
             return sum
     
         perms = list(permutations(range(len(c))))
         sums = [sum_sq(r,c,perm) for perm in perms]
         return perms[np.argmin(sums)]
     return np.asarray(list(map(find_single_f_perm, r,c)))
+
+from scipy.sparse import coo_matrix
+
+def get_permutation_matrix(perms):
+    def get_single_permutation_matrix(perm):
+        K = len(perm)
+        rows = list(range(K))
+        cols = perm
+        data = np.ones(K)
+        return coo_matrix((data,(rows,cols)),shape=(K, K)).toarray()
+    return np.asarray(list(map(get_single_permutation_matrix,perms)))
