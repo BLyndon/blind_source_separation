@@ -19,3 +19,25 @@ def TDOA_estimator(Wf, J=0):
         return estimator
     rf_est = list(map(single_f_est, Wf))
     return np.squeeze(np.asarray(rf_est))
+
+def init_centers(r):
+    N, K = r.shape
+    scale = abs(rf_est).mean()
+    c = scale*np.random.randn(K,1)
+    return np.repeat(c,N, axis=1).T
+
+def find_permutations(r,c)
+    def find_single_f_perm(arg):
+        r, c = arg
+        def sum_sq(v,c,perm):
+            sum=0
+            for k in range(c.shape[0]):
+            sum += np.linalg.norm(v[perm[k]]-c[k])**2
+            return sum
+    
+        perms = list(permutations(range(len(c))))
+        sums = [sum_sq(v,c,perm) for perm in perms]
+        return perms[np.argmin(sums)]
+    
+    perms = list(map(find_single_f_perm, [r,c]))
+    return np.asarray(perms)
