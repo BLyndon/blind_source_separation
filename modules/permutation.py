@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.linalg import *
+from itertools import permutations
 
 def TDOA_estimator(Wf, J=0):
     def single_f_est(wf,J=J): 
@@ -22,22 +23,19 @@ def TDOA_estimator(Wf, J=0):
 
 def init_centers(r):
     N, K = r.shape
-    scale = abs(rf_est).mean()
+    scale = abs(r).mean()
     c = scale*np.random.randn(K,1)
     return np.repeat(c,N, axis=1).T
 
-def find_permutations(r,c)
-    def find_single_f_perm(arg):
-        r, c = arg
+def find_permutations(r,c):
+    def find_single_f_perm(r,c):
         def sum_sq(v,c,perm):
             sum=0
             for k in range(c.shape[0]):
-            sum += np.linalg.norm(v[perm[k]]-c[k])**2
+                sum += np.linalg.norm(v[perm[k]]-c[k])**2
             return sum
     
         perms = list(permutations(range(len(c))))
-        sums = [sum_sq(v,c,perm) for perm in perms]
+        sums = [sum_sq(r,c,perm) for perm in perms]
         return perms[np.argmin(sums)]
-    
-    perms = list(map(find_single_f_perm, [r,c]))
-    return np.asarray(perms)
+    return np.asarray(list(map(find_single_f_perm, r,c)))
