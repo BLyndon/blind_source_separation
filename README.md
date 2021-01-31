@@ -1,5 +1,15 @@
 # Blind Source Separation
 
+In [BSS.ipynb](https://github.com/BLyndon/blind_source_separation/blob/master/notebooks/BSS.ipynb) a frequency domain BSS applied to the audio files under "2. Speech - Speech Separation", found on 
+
+[Blind Source Separation of recorded speech and music signals.](https://cnl.salk.edu/~tewon/Blind/blind_audio.html).
+
+The results are found here
+
++ [data/separated](https://github.com/BLyndon/blind_source_separation/tree/master/data/separated)
+
+The permutation alignment is based on time-difference of arrival (TDOA) estimation.
+
 ## Heuristic Introduction
 
 Consider a fixed setting of *N* sources and *M* receivers, denoted by s_i, x_i resp.
