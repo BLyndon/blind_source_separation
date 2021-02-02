@@ -8,6 +8,7 @@ from itertools import permutations
 @freq_list_decorator
 def TDOA_estimator(Wf, J=0):
     W, f = Wf
+    assert f != 0, print("TDOA estimator: wanishing frequency!")
     A = get_unmixing(W)
 
     M = A.shape[0]
@@ -54,7 +55,9 @@ def permute_W(Wf, P):
 @freq_list_decorator
 def permute_Y(Yf, P):
     Y, f = Yf
+
     Y_ = P.dot(Y)
+    
     Yf_ = [Y_, f]
     return Yf_
 
