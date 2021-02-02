@@ -61,7 +61,7 @@ def complex_FastICA(Z, U=None, tol=1e-6, max_iter=1000, alpha=0.1, history=True)
         U1 = np.diag(dg).dot(U) - g.conj().dot(Z.conj().T)/M
         U1 = sym_decorrelation(U1)
 
-        lim = max(abs(abs(np.diag(U1.dot(U.T))) - 1))
+        lim = max(abs(abs(np.diag(U1.dot(U.conj().T))) - 1))
         U = U1
 
         if history:
@@ -81,18 +81,23 @@ def complex_FastICA(Z, U=None, tol=1e-6, max_iter=1000, alpha=0.1, history=True)
     return U, Y
 
 
-def MLE(X, V, U, step_size=1e-5, max_iter=1000, tol=1e-6, history=True):
+def MLE(X, V=None, U=None, W=None, step_size=1e-5, max_iter=1000, tol=1e-6, history=True):
     def _g(y):
         return y/abs(y)
 
     N, M = X.shape
+    conv=0
 
     if history:
         lims = list()
 
-    W = U.dot(V)
+    if W is None:
+        if V is None and U is None:
+            W = np.asarray(np.random.randn(N, N), dtype=X.dtype)
+        else:
+            W = U.dot(V)
 
-    for _ in range(max_iter):
+    for i in range(max_iter):
         Y = W.dot(X)
 
         if X.dtype == np.complex:
@@ -103,13 +108,14 @@ def MLE(X, V, U, step_size=1e-5, max_iter=1000, tol=1e-6, history=True):
         step = step_size*(np.eye(N) - phi.dot(Y.conj().T)/M).dot(W)
         W1 = W + step
 
-        lim = np.max(abs(step))
+        lim = np.max(abs(step))/step_size
         W = W1
 
         if history:
             lims.append(lim)
 
         if lim < tol:
+            conv=1
             break
     else:
         warnings.warn('MLE did not converge.')
@@ -119,23 +125,47 @@ def MLE(X, V, U, step_size=1e-5, max_iter=1000, tol=1e-6, history=True):
         plt.show()
 
     Y = W.dot(X)
-
-    return W, Y
+    
+    return W, Y, conv
 
 
 @timit
-def source_separation(Xfn, f, max_iter=1000):
+def source_separation(Xfn, max_iter=1000, step_size=1e-2, tol=1e-6, history=False):
     Yfn = np.zeros_like(Xfn)
     Wf = np.zeros((Xfn.shape[1], Xfn.shape[0],
-                   Xfn.shape[0]), dtype=np.complex128)
-    for i in trange(Xfn.shape[1], desc='1st loop'):
+                   Xfn.shape[0]), dtype=Xfn.dtype)
+    ratio=0
+    n=Xfn.shape[1]
+    for i in trange(n, desc='freqs'):
         Xn = Xfn[:, i, :]
 
         V, Z = whitening(Xn)
-        U, _ = complex_FastICA(Z, max_iter=max_iter, history=False)
-        W, Y = MLE(Xn, V, U, max_iter=max_iter,
-                   step_size=1e-5, tol=1e-7, history=False)
+        U, _ = complex_FastICA(Z, max_iter=max_iter, history=history)
+        W, Y, conv = MLE(Xn, V, U, max_iter=max_iter,
+                   step_size=step_size, tol=tol, history=history)
 
         Yfn[:, i, :] = Y
         Wf[i, :, :] = W
-    return Wf, Yfn
+        ratio+=conv/n
+    print("Convergence ratio: {:.2f}%".format(100*ratio))
+    return Wf, Yfn, ratio
+
+
+@timit
+def restart(Xfn, Wf, max_iter=1000, step_size=1e-2, tol=1e-6, history=False):
+    Wf_ = Wf.copy()
+    Yfn = np.zeros_like(Xfn)
+    n=Xfn.shape[1]
+    ratio=0
+    for i in trange(n, desc='freqs'):
+        Xn = Xfn[:, i, :]
+        W = Wf_[i, :, :]
+
+        W, Y, conv = MLE(Xn, W=W, max_iter=max_iter,
+                   step_size=step_size, tol=tol, history=history)
+
+        Yfn[:, i, :] = Y
+        Wf_[i, :, :] = W
+        ratio+=conv/n
+    print("Convergence: {:.2f}%".format(100*ratio))
+    return Wf_, Yfn, ratio
