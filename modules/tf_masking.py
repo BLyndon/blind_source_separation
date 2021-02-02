@@ -23,13 +23,11 @@ def get_theta(X, Wf):
     return np.arccos(phi.astype(np.float64))
 
 
-def mask(Xfn, Yf, Wf, theta_max=0.5):
-    Xf = [Xfn[:, i, :] for i in range(1, Xfn.shape[1])]
-
-    theta = get_theta(Xf, Wf)
+def mask(Xf_, Yf_, Wf_, theta_max=0.5):
+    theta = get_theta(Xf_, Wf_)
 
     M = np.where(theta < theta_max, 1, 0)
     M = np.swapaxes(M, 0, 1)
 
-    YY = get_Y(Yf)
-    return M*YY
+    Y = get_Y(Yf_)
+    return M*Y
