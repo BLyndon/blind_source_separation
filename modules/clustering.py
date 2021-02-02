@@ -1,6 +1,4 @@
 import numpy as np
-from scipy.sparse import coo_matrix
-from auxiliaries import freq_list_decorator
 from permutation import get_permutation_matrix, find_permutations
 
 
@@ -20,14 +18,14 @@ def update_centroids(r, perms):
 
 
 def cluster(r, max_iter=100):
-    c = init_centers(r)
+    c_ = init_centers(r)
     for i in range(max_iter):
-        c_ = c
-        perms = find_permutations(r, c)
-        c = update_centroids(r, perms)
+        cc = c_.copy()
+        perms = find_permutations(r, c_)
+        c_ = update_centroids(r, perms)
 
-        dc = abs(c-c_)
+        dc = abs(c_-cc)
         if dc.all() < 1e-12:
             print("Converged at itr={}".format(i))
             break
-    return perms, c
+    return perms, c_
